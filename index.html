@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learn Irish Politicians</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Learn Irish Politicians</h1>
+    </header>
+
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" data-tab="add">Add Politician</button>
+            <button class="tab" data-tab="flashcards">Flashcards</button>
+            <button class="tab" data-tab="quiz">Quiz</button>
+        </div>
+
+        <div id="add" class="section active">
+            <h2>Add New Politician</h2>
+            <form id="politicianForm">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="photo">Photo URL:</label>
+                    <input type="text" id="photo">
+                </div>
+                <div class="form-group">
+                    <label for="location">Town/County:</label>
+                    <input type="text" id="location" required>
+                </div>
+                <div class="form-group">
+                    <label for="party">Political Party:</label>
+                    <input type="text" id="party" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Ministerial Role (if any):</label>
+                    <input type="text" id="role">
+                </div>
+                <div class="form-group">
+                    <label for="details">Additional Details:</label>
+                    <textarea id="details" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn">Add Politician</button>
+            </form>
+        </div>
+
+        <div id="flashcards" class="section">
+            <div id="flashcardContainer"></div>
+            <div class="flashcard-controls">
+                <button id="prevCard" class="btn">Previous</button>
+                <button id="nextCard" class="btn">Next</button>
+                <button id="flipCard" class="btn">Flip Card</button>
+            </div>
+        </div>
+
+        <div id="quiz" class="section">
+            <div class="quiz-container">
+                <div class="score">Score: <span id="score">0</span></div>
+                <div id="quizQuestion" class="quiz-question"></div>
+                <div id="quizOptions" class="quiz-options"></div>
+                <button id="nextQuestion" class="btn">Next Question</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
