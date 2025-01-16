@@ -9,6 +9,7 @@ let currentQuestion = null;
 document.getElementById('politicianForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const politician = {
+        id: Date.now(), // Add unique ID for editing
         name: document.getElementById('name').value,
         photo: document.getElementById('photo').value || '/api/placeholder/200/200',
         location: document.getElementById('location').value,
@@ -47,24 +48,131 @@ function updateFlashcards() {
     const flashcard = document.createElement('div');
     flashcard.className = 'flashcard';
     
-    if (isCardFlipped) {
-        flashcard.innerHTML = `
-            <h3>${politician.name}</h3>
-            <p><strong>Location:</strong> ${politician.location}</p>
-            <p><strong>Party:</strong> ${politician.party}</p>
-            ${politician.role ? `<p><strong>Role:</strong> ${politician.role}</p>` : ''}
-            ${politician.details ? `<p><strong>Details:</strong> ${politician.details}</p>` : ''}
-        `;
-    } else {
-        flashcard.innerHTML = `
-            <img src="${politician.photo}" alt="${politician.name}">
-            <h3>${politician.name}</h3>
-        `;
+    function renderFlashcardContent() {
+        if (isCardFlipped) {
+            flashcard.innerHTML = `
+                <div class="flashcard-content">
+                    <h3>${politician.name}</h3>
+                    <p><strong>Location:</strong> ${politician.location}</p>
+                    <p><strong>Party:</strong> ${politician.party}</p>
+                    ${politician.role ? `<p><strong>Role:</strong> ${politician.role}</p>` : ''}
+                    ${politician.details ? `<p><strong>Details:</strong> ${politician.details}</p>` : ''}
+                    <button class="btn edit-btn" onclick="editPolitician(${politician.id})">Edit</button>
+                </div>
+            `;
+        } else {
+            flashcard.innerHTML = `
+                <div class="flashcard-content">
+                    <img src="${politician.photo}" alt="${politician.name}">
+                    <h3>${politician.name}</h3>
+                </div>
+            `;
+        }
     }
+
+    renderFlashcardContent();
+
+    // Add click handler for flipping
+    flashcard.addEventListener('click', (e) => {
+        // Don't flip if clicking the edit button
+        if (!e.target.classList.contains('edit-btn')) {
+            isCardFlipped = !isCardFlipped;
+            renderFlashcardContent();
+        }
+    });
 
     document.getElementById('flashcardContainer').innerHTML = '';
     document.getElementById('flashcardContainer').appendChild(flashcard);
 }
+
+// Edit politician function
+window.editPolitician = function(id) {
+    const politician = politicians.find(p => p.id === id);
+    if (!politician) return;
+
+    // Create modal for editing
+    const modal = document.createElement('div');
+    modal.className = 'edit-modal';
+    modal.innerHTML = `
+        <div class="edit-modal-content">
+            <h2>Edit Politician</h2>
+            <form id="editForm">
+                <div class="form-group">
+                    <label for="editName">Name:</label>
+                    <input type="text" id="editName" value="${politician.name}" required>
+                </div>
+                <div class="form-group">
+                    <label for="editPhoto">Photo URL:</label>
+                    <input type="text" id="editPhoto" value="${politician.photo}">
+                </div>
+                <div class="form-group">
+                    <label for="editLocation">Town/County:</label>
+                    <input type="text" id="editLocation" value="${politician.location}" required>
+                </div>
+                <div class="form-group">
+                    <label for="editParty">Political Party:</label>
+                    <input type="text" id="editParty" value="${politician.party}" required>
+                </div>
+                <div class="form-group">
+                    <label for="editRole">Ministerial Role:</label>
+                    <input type="text" id="editRole" value="${politician.role}">
+                </div>
+                <div class="form-group">
+                    <label for="editDetails">Additional Details:</label>
+                    <textarea id="editDetails" rows="3">${politician.details}</textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn">Save Changes</button>
+                    <button type="button" class="btn delete-btn" onclick="deletePolitician(${politician.id})">Delete</button>
+                    <button type="button" class="btn" onclick="closeEditModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    // Handle form submission
+    document.getElementById('editForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const updatedPolitician = {
+            ...politician,
+            name: document.getElementById('editName').value,
+            photo: document.getElementById('editPhoto').value,
+            location: document.getElementById('editLocation').value,
+            party: document.getElementById('editParty').value,
+            role: document.getElementById('editRole').value,
+            details: document.getElementById('editDetails').value
+        };
+
+        const index = politicians.findIndex(p => p.id === id);
+        politicians[index] = updatedPolitician;
+        localStorage.setItem('politicians', JSON.stringify(politicians));
+        closeEditModal();
+        updateFlashcards();
+    });
+};
+
+// Delete politician function
+window.deletePolitician = function(id) {
+    if (confirm('Are you sure you want to delete this politician?')) {
+        politicians = politicians.filter(p => p.id !== id);
+        localStorage.setItem('politicians', JSON.stringify(politicians));
+        closeEditModal();
+        if (currentCardIndex >= politicians.length) {
+            currentCardIndex = Math.max(0, politicians.length - 1);
+        }
+        updateFlashcards();
+    }
+};
+
+// Close edit modal
+window.closeEditModal = function() {
+    const modal = document.querySelector('.edit-modal');
+    if (modal) {
+        modal.remove();
+    }
+};
 
 document.getElementById('prevCard').addEventListener('click', () => {
     if (currentCardIndex > 0) {
@@ -82,12 +190,11 @@ document.getElementById('nextCard').addEventListener('click', () => {
     }
 });
 
-document.getElementById('flipCard').addEventListener('click', () => {
-    isCardFlipped = !isCardFlipped;
-    updateFlashcards();
-});
+// Remove the flip button since we now flip by clicking
+const flipButton = document.getElementById('flipCard');
+flipButton.parentElement.removeChild(flipButton);
 
-// Quiz functions
+// Quiz functions remain the same
 function generateQuestion() {
     if (politicians.length < 4) {
         document.getElementById('quizQuestion').innerHTML = 'Add at least 4 politicians to start the quiz!';
@@ -114,7 +221,6 @@ function generateQuestion() {
     document.getElementById('quizQuestion').textContent = 
         questionType.question.replace('{name}', correctPolitician.name);
 
-    // Generate options
     let options = [currentQuestion.correctAnswer];
     while (options.length < 4) {
         const randomPolitician = politicians[Math.floor(Math.random() * politicians.length)];
@@ -124,7 +230,6 @@ function generateQuestion() {
         }
     }
 
-    // Shuffle options
     options = options.sort(() => Math.random() - 0.5);
 
     const optionsHTML = options.map(option => `
