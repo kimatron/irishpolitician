@@ -3,50 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Learn Irish Politicians</title>
+    <title>Emilija's Politician Homework</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
     <header>
-        <h1>Learn Irish Politicians</h1>
+        <div class="hero-section">
+            <div class="profile-container">
+                <img src="images/emj1.jpg" alt="Emilija" class="profile-image">
+                <div class="image-overlay"></div>
+            </div>
+            <div class="header-text">
+                <h1>Emilija's Politician Homework</h1>
+                <p class="subtitle">Capturing Corruption, One Frame at a Time 📸</p>
+                <p class="tagline">"Because someone has to remember all these faces, and today that someone is me."</p>
+            </div>
+        </div>
     </header>
 
     <div class="container">
         <div class="tabs">
-            <button class="tab active" data-tab="add">Add Politician</button>
-            <button class="tab" data-tab="flashcards">Flashcards</button>
-            <button class="tab" data-tab="quiz">Quiz</button>
+            <button class="tab active" data-tab="add">
+                Add New Face
+            </button>
+            <button class="tab" data-tab="flashcards">
+                Study Faces
+            </button>
+            <button class="tab" data-tab="quiz">
+                Test Yourself
+            </button>
         </div>
 
         <div id="add" class="section active">
-            <h2>Add New Politician</h2>
-            <form id="politicianForm">
-                <div class="form-group">
-                    <label for="name">Name:</label>
-                    <input type="text" id="name" required>
-                </div>
-                <div class="form-group">
-                    <label for="photo">Photo URL:</label>
-                    <input type="text" id="photo">
-                </div>
-                <div class="form-group">
-                    <label for="location">Town/County:</label>
-                    <input type="text" id="location" required>
-                </div>
-                <div class="form-group">
-                    <label for="party">Political Party:</label>
-                    <input type="text" id="party" required>
-                </div>
-                <div class="form-group">
-                    <label for="role">Ministerial Role (if any):</label>
-                    <input type="text" id="role">
-                </div>
-                <div class="form-group">
-                    <label for="details">Additional Details:</label>
-                    <textarea id="details" rows="3"></textarea>
-                </div>
-                <button type="submit" class="btn">Add Politician</button>
-            </form>
+            <div class="quiz-container">
+                <h2>Add New Politician</h2>
+                <form id="politicianForm">
+                    <div class="form-group">
+                        <label for="name">Name:</label>
+                        <input type="text" id="name" required placeholder="e.g., Leo Varadkar">
+                    </div>
+                    <div class="form-group">
+                        <label for="photo">Photo URL:</label>
+                        <input type="text" id="photo" placeholder="Paste image URL here">
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Town/County:</label>
+                        <input type="text" id="location" required placeholder="e.g., Dublin West">
+                    </div>
+                    <div class="form-group">
+                        <label for="party">Political Party:</label>
+                        <select id="party" required>
+                            <option value="">Select a party</option>
+                            <option value="Fianna Fáil">Fianna Fáil</option>
+                            <option value="Fine Gael">Fine Gael</option>
+                            <option value="Sinn Féin">Sinn Féin</option>
+                            <option value="Labour Party">Labour Party</option>
+                            <option value="Green Party">Green Party</option>
+                            <option value="Social Democrats">Social Democrats</option>
+                            <option value="People Before Profit">People Before Profit</option>
+                            <option value="Solidarity">Solidarity</option>
+                            <option value="Aontú">Aontú</option>
+                            <option value="Independent">Independent</option>
+                            <option value="custom">Other (specify)</option>
+                        </select>
+                        <input type="text" id="customParty" placeholder="Enter party name" style="display: none;" class="custom-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Ministerial Role:</label>
+                        <select id="role">
+                            <option value="">Select a role (if applicable)</option>
+                            <option value="Taoiseach">Taoiseach</option>
+                            <option value="Tánaiste">Tánaiste</option>
+                            <option value="Minister for Finance">Minister for Finance</option>
+                            <option value="Minister for Foreign Affairs">Minister for Foreign Affairs</option>
+                            <option value="Minister for Justice">Minister for Justice</option>
+                            <option value="Minister for Health">Minister for Health</option>
+                            <option value="Minister for Housing">Minister for Housing</option>
+                            <option value="Minister for Education">Minister for Education</option>
+                            <option value="Minister for Transport">Minister for Transport</option>
+                            <option value="Minister for Agriculture">Minister for Agriculture</option>
+                            <option value="Minister for Social Protection">Minister for Social Protection</option>
+                            <option value="Minister for Enterprise">Minister for Enterprise</option>
+                            <option value="Minister for Environment">Minister for Environment</option>
+                            <option value="Minister for Defence">Minister for Defence</option>
+                            <option value="Minister for Tourism">Minister for Tourism</option>
+                            <option value="Minister of State">Minister of State</option>
+                            <option value="custom">Other (specify)</option>
+                        </select>
+                        <input type="text" id="customRole" placeholder="Enter role" style="display: none;" class="custom-input">
+                    </div>
+                    <div class="form-group">
+                        <label for="details">Additional Details:</label>
+                        <textarea id="details" rows="3" placeholder="Any interesting facts or notes..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">Add to Study List</button>
+                </form>
+            </div>
         </div>
 
         <div id="flashcards" class="section">
@@ -54,7 +107,6 @@
             <div class="flashcard-controls">
                 <button id="prevCard" class="btn">Previous</button>
                 <button id="nextCard" class="btn">Next</button>
-                <button id="flipCard" class="btn">Flip Card</button>
             </div>
         </div>
 

@@ -4,19 +4,49 @@ let currentCardIndex = 0;
 let isCardFlipped = false;
 let score = 0;
 let currentQuestion = null;
+let isQuizActive = false;
+
+// Handle custom inputs for party and role
+document.getElementById('party').addEventListener('change', function() {
+    const customPartyInput = document.getElementById('customParty');
+    customPartyInput.style.display = this.value === 'custom' ? 'block' : 'none';
+    if (this.value !== 'custom') {
+        customPartyInput.value = '';
+    }
+});
+
+document.getElementById('role').addEventListener('change', function() {
+    const customRoleInput = document.getElementById('customRole');
+    customRoleInput.style.display = this.value === 'custom' ? 'block' : 'none';
+    if (this.value !== 'custom') {
+        customRoleInput.value = '';
+    }
+});
 
 // Add politician form handling
 document.getElementById('politicianForm').addEventListener('submit', function(e) {
     e.preventDefault();
+    
+    let partyValue = document.getElementById('party').value;
+    if (partyValue === 'custom') {
+        partyValue = document.getElementById('customParty').value;
+    }
+
+    let roleValue = document.getElementById('role').value;
+    if (roleValue === 'custom') {
+        roleValue = document.getElementById('customRole').value;
+    }
+
     const politician = {
-        id: Date.now(), // Add unique ID for editing
+        id: Date.now(),
         name: document.getElementById('name').value,
         photo: document.getElementById('photo').value || '/api/placeholder/200/200',
         location: document.getElementById('location').value,
-        party: document.getElementById('party').value,
-        role: document.getElementById('role').value,
+        party: partyValue,
+        role: roleValue,
         details: document.getElementById('details').value
     };
+
     politicians.push(politician);
     localStorage.setItem('politicians', JSON.stringify(politicians));
     this.reset();
@@ -32,7 +62,7 @@ document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.add('active');
         document.getElementById(tab.dataset.tab).classList.add('active');
         if (tab.dataset.tab === 'quiz') {
-            generateQuestion();
+            resetQuiz();
         }
     });
 });
@@ -40,7 +70,8 @@ document.querySelectorAll('.tab').forEach(tab => {
 // Flashcard functions
 function updateFlashcards() {
     if (politicians.length === 0) {
-        document.getElementById('flashcardContainer').innerHTML = '<p>No politicians added yet. Add some politicians first!</p>';
+        document.getElementById('flashcardContainer').innerHTML = 
+            '<p style="text-align: center; color: var(--text-light);">No politicians added yet. Start by adding some politicians!</p>';
         return;
     }
 
@@ -72,10 +103,8 @@ function updateFlashcards() {
 
     renderFlashcardContent();
 
-    // Add click handler for flipping
     flashcard.addEventListener('click', (e) => {
-        // Don't flip if clicking the edit button
-        if (!e.target.classList.contains('edit-btn')) {
+        if (!e.target.classList.contains('btn')) {
             isCardFlipped = !isCardFlipped;
             renderFlashcardContent();
         }
@@ -85,12 +114,118 @@ function updateFlashcards() {
     document.getElementById('flashcardContainer').appendChild(flashcard);
 }
 
+// Navigation for flashcards
+document.getElementById('prevCard').addEventListener('click', () => {
+    if (currentCardIndex > 0) {
+        currentCardIndex--;
+        isCardFlipped = false;
+        updateFlashcards();
+    }
+});
+
+document.getElementById('nextCard').addEventListener('click', () => {
+    if (currentCardIndex < politicians.length - 1) {
+        currentCardIndex++;
+        isCardFlipped = false;
+        updateFlashcards();
+    }
+});
+
+// Quiz functions
+function resetQuiz() {
+    score = 0;
+    isQuizActive = true;
+    document.getElementById('score').textContent = score;
+    generateQuestion();
+}
+
+function generateQuestion() {
+    if (!isQuizActive) return;
+    
+    if (politicians.length < 4) {
+        document.getElementById('quizQuestion').innerHTML = 
+            '<p style="color: var(--text-light);">Add at least 4 politicians to start the quiz!</p>';
+        document.getElementById('quizOptions').innerHTML = '';
+        return;
+    }
+
+    const questionTypes = [
+        { type: 'party', question: 'Which political party does {name} belong to?' },
+        { type: 'location', question: 'Which town/county is {name} from?' },
+        { type: 'role', question: 'What is the ministerial role of {name}?' }
+    ];
+
+    const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+    const correctPolitician = politicians[Math.floor(Math.random() * politicians.length)];
+    
+    currentQuestion = {
+        politician: correctPolitician,
+        type: questionType.type,
+        correctAnswer: correctPolitician[questionType.type]
+    };
+
+    // Skip if the selected politician doesn't have the required information
+    if (!currentQuestion.correctAnswer) {
+        generateQuestion();
+        return;
+    }
+
+    document.getElementById('quizQuestion').textContent = 
+        questionType.question.replace('{name}', correctPolitician.name);
+
+    // Generate options
+    let options = [currentQuestion.correctAnswer];
+    let attempts = 0;
+    while (options.length < 4 && attempts < 20) {
+        const randomPolitician = politicians[Math.floor(Math.random() * politicians.length)];
+        const option = randomPolitician[questionType.type];
+        if (option && !options.includes(option)) {
+            options.push(option);
+        }
+        attempts++;
+    }
+
+    // Shuffle options
+    options = options.sort(() => Math.random() - 0.5);
+
+    const optionsHTML = options.map(option => `
+        <div class="quiz-option" onclick="checkAnswer('${option.replace(/'/g, "\\'")}')">${option}</div>
+    `).join('');
+
+    document.getElementById('quizOptions').innerHTML = optionsHTML;
+}
+
+function checkAnswer(selected) {
+    if (!currentQuestion || !isQuizActive) return;
+
+    const options = document.querySelectorAll('.quiz-option');
+    options.forEach(option => {
+        option.style.pointerEvents = 'none';
+        if (option.textContent === currentQuestion.correctAnswer) {
+            option.classList.add('correct');
+        } else if (option.textContent === selected && selected !== currentQuestion.correctAnswer) {
+            option.classList.add('incorrect');
+        }
+    });
+
+    if (selected === currentQuestion.correctAnswer) {
+        score++;
+        document.getElementById('score').textContent = score;
+    }
+
+    // Wait before showing next question
+    setTimeout(() => {
+        if (isQuizActive) {
+            generateQuestion();
+        }
+    }, 1500);
+}
+
 // Edit politician function
 window.editPolitician = function(id) {
     const politician = politicians.find(p => p.id === id);
     if (!politician) return;
 
-    // Create modal for editing
     const modal = document.createElement('div');
     modal.className = 'edit-modal';
     modal.innerHTML = `
@@ -119,7 +254,7 @@ window.editPolitician = function(id) {
                 </div>
                 <div class="form-group">
                     <label for="editDetails">Additional Details:</label>
-                    <textarea id="editDetails" rows="3">${politician.details}</textarea>
+                    <textarea id="editDetails" rows="3">${politician.details || ''}</textarea>
                 </div>
                 <div class="button-group">
                     <button type="submit" class="btn">Save Changes</button>
@@ -132,7 +267,6 @@ window.editPolitician = function(id) {
 
     document.body.appendChild(modal);
 
-    // Handle form submission
     document.getElementById('editForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const updatedPolitician = {
@@ -153,7 +287,6 @@ window.editPolitician = function(id) {
     });
 };
 
-// Delete politician function
 window.deletePolitician = function(id) {
     if (confirm('Are you sure you want to delete this politician?')) {
         politicians = politicians.filter(p => p.id !== id);
@@ -166,7 +299,6 @@ window.deletePolitician = function(id) {
     }
 };
 
-// Close edit modal
 window.closeEditModal = function() {
     const modal = document.querySelector('.edit-modal');
     if (modal) {
@@ -174,94 +306,5 @@ window.closeEditModal = function() {
     }
 };
 
-document.getElementById('prevCard').addEventListener('click', () => {
-    if (currentCardIndex > 0) {
-        currentCardIndex--;
-        isCardFlipped = false;
-        updateFlashcards();
-    }
-});
-
-document.getElementById('nextCard').addEventListener('click', () => {
-    if (currentCardIndex < politicians.length - 1) {
-        currentCardIndex++;
-        isCardFlipped = false;
-        updateFlashcards();
-    }
-});
-
-// Remove the flip button since we now flip by clicking
-const flipButton = document.getElementById('flipCard');
-flipButton.parentElement.removeChild(flipButton);
-
-// Quiz functions remain the same
-function generateQuestion() {
-    if (politicians.length < 4) {
-        document.getElementById('quizQuestion').innerHTML = 'Add at least 4 politicians to start the quiz!';
-        document.getElementById('quizOptions').innerHTML = '';
-        document.getElementById('nextQuestion').style.display = 'none';
-        return;
-    }
-
-    const questionTypes = [
-        { type: 'party', question: 'Which political party does {name} belong to?' },
-        { type: 'location', question: 'Which town/county is {name} from?' },
-        { type: 'role', question: 'What is the ministerial role of {name}?' }
-    ];
-
-    const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
-    const correctPolitician = politicians[Math.floor(Math.random() * politicians.length)];
-    
-    currentQuestion = {
-        politician: correctPolitician,
-        type: questionType.type,
-        correctAnswer: correctPolitician[questionType.type]
-    };
-
-    document.getElementById('quizQuestion').textContent = 
-        questionType.question.replace('{name}', correctPolitician.name);
-
-    let options = [currentQuestion.correctAnswer];
-    while (options.length < 4) {
-        const randomPolitician = politicians[Math.floor(Math.random() * politicians.length)];
-        const option = randomPolitician[questionType.type];
-        if (!options.includes(option)) {
-            options.push(option);
-        }
-    }
-
-    options = options.sort(() => Math.random() - 0.5);
-
-    const optionsHTML = options.map(option => `
-        <div class="quiz-option" onclick="checkAnswer('${option}')">${option}</div>
-    `).join('');
-
-    document.getElementById('quizOptions').innerHTML = optionsHTML;
-    document.getElementById('nextQuestion').style.display = 'none';
-}
-
-function checkAnswer(selected) {
-    if (!currentQuestion) return;
-
-    const options = document.querySelectorAll('.quiz-option');
-    options.forEach(option => {
-        option.style.pointerEvents = 'none';
-        if (option.textContent === currentQuestion.correctAnswer) {
-            option.classList.add('correct');
-        } else if (option.textContent === selected && selected !== currentQuestion.correctAnswer) {
-            option.classList.add('incorrect');
-        }
-    });
-
-    if (selected === currentQuestion.correctAnswer) {
-        score++;
-        document.getElementById('score').textContent = score;
-    }
-
-    document.getElementById('nextQuestion').style.display = 'block';
-}
-
-document.getElementById('nextQuestion').addEventListener('click', generateQuestion);
-
-// Initialize flashcards
+// Initialize the app
 updateFlashcards();
